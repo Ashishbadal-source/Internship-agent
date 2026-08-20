@@ -24,8 +24,7 @@ ROLE_GROUPS = {
     ],
     "data_analyst": [
         "data analyst",
-        "data analytics",
-        "business analyst"
+        "data analytics"
     ],
     "ml": [
         "machine learning",
@@ -57,23 +56,15 @@ def text(job):
     ]).lower()
 
 def is_internship(job):
-    t = text(job)
     title = job.get("title", "").lower()
-    return (
-        "intern" in title
-        or "internship" in t
-        or "internship" in job.get("job_type", "").lower()
-    )
+    t = text(job)
+    return "intern" in title or "internship" in t
 
 def blocked_role(job, profile):
     title = job.get("title", "").lower()
-    description = job.get("description", "").lower()
 
-    blocked = profile.get("blocked_roles", [])
-
-    for role in blocked:
-        role = role.lower()
-        if role in title:
+    for role in profile.get("blocked_roles", []):
+        if role.lower() in title:
             return True
 
     backend_patterns = [
@@ -86,88 +77,63 @@ def blocked_role(job, profile):
         "back end engineer"
     ]
 
-    target_context = any(
-        word in title
-        for word in [
-            "software engineer",
-            "software developer",
-            "sde",
-            "swe",
-            "full stack",
-            "fullstack",
-            "ai",
-            "machine learning",
-            "ml",
-            "data science",
-            "data analyst"
-        ]
-    )
-
-    if any(pattern in title for pattern in backend_patterns) and not target_context:
-        return True
-
-    return False
+    return any(x in title for x in backend_patterns)
 
 def role_match(job, profile):
     title = job.get("title", "").lower()
 
     for role in profile.get("target_roles", []):
-        role = role.lower()
-        if role in title:
+        if role.lower() in title:
             return True
 
-    for group in ROLE_GROUPS.values():
-        matches = [x for x in group if x in title]
-        if matches:
+    for keywords in ROLE_GROUPS.values():
+        if any(keyword in title for keyword in keywords):
             return True
 
     return False
 
 def matched_role_groups(job):
     title = job.get("title", "").lower()
-    groups = []
 
-    for group, keywords in ROLE_GROUPS.items():
-        if any(keyword in title for keyword in keywords):
-            groups.append(group)
-
-    return groups
+    return [
+        group
+        for group, keywords in ROLE_GROUPS.items()
+        if any(keyword in title for keyword in keywords)
+    ]
 
 def mode(job):
     return job.get("work_mode", "").lower()
 
 def parse_duration_months(job):
     t = text(job)
-
-    patterns = [
-        (r"(\d+(?:\.\d+)?)\s*(?:months?|mos?)", lambda x: float(x)),
-        (r"(\d+(?:\.\d+)?)\s*(?:weeks?|wks?)", lambda x: float(x) / 4.345),
-        (r"(\d+(?:\.\d+)?)\s*(?:days?)", lambda x: float(x) / 30.44)
-    ]
-
     values = []
 
-    for pattern, converter in patterns:
+    patterns = [
+        (r"(\d+(?:\.\d+)?)\s*(?:months?|mos?)", 1),
+        (r"(\d+(?:\.\d+)?)\s*(?:weeks?|wks?)", 1 / 4.345),
+        (r"(\d+(?:\.\d+)?)\s*(?:days?)", 1 / 30.44)
+    ]
+
+    for pattern, factor in patterns:
         for match in re.finditer(pattern, t):
-            try:
-                values.append(converter(match.group(1)))
-            except ValueError:
-                pass
+            values.append(float(match.group(1)) * factor)
 
     return min(values) if values else None
 
 def duration_ok(job, profile):
-    work_mode = mode(job)
     months = parse_duration_months(job)
 
-    if work_mode == "remote":
-        return months is None or months < 8
+    if months is None:
+        return True
 
-    if work_mode == "hybrid":
-        return months is None or months <= 3
+    if mode(job) == "remote":
+        return months < 8
 
-    if work_mode == "onsite":
-        return months is None or months <= 2
+    if mode(job) == "hybrid":
+        return months <= 3
+
+    if mode(job) == "onsite":
+        return months <= 2
 
     return True
 
@@ -187,23 +153,23 @@ def salary_monthly_inr(job):
     if not nums:
         return None
 
-    low = min(nums)
+    value = min(nums)
 
     if "usd" in t or "$" in salary:
-        low *= INR_PER_USD
+        value *= INR_PER_USD
     elif "eur" in t or "€" in salary:
-        low *= INR_PER_EUR
+        value *= INR_PER_EUR
     elif "gbp" in t or "£" in salary:
-        low *= INR_PER_GBP
+        value *= INR_PER_GBP
 
     if "year" in t or "/yr" in t or "annual" in t:
-        low /= 12
+        value /= 12
     elif "week" in t:
-        low *= 4.345
+        value *= 4.345
     elif "day" in t:
-        low *= 30.44
+        value *= 30.44
 
-    return low
+    return value
 
 def salary_ok(job):
     monthly = salary_monthly_inr(job)
@@ -220,8 +186,9 @@ def fresh_days(job):
         return 999
 
     try:
-        value = value.replace("Z", "+00:00")
-        dt = datetime.fromisoformat(value)
+        dt = datetime.fromisoformat(
+            value.replace("Z", "+00:00")
+        )
 
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
@@ -234,93 +201,101 @@ def fresh_days(job):
     except Exception:
         return 999
 
+def graduation_ok(job, profile):
+    target_year = profile.get("target_year", 2028)
+    t = text(job)
+
+    years = []
+
+    patterns = [
+        r"(?:graduat(?:e|ing)|graduation|class of|batch of|students? graduating)\D{0,30}(20\d{2})",
+        r"(20\d{2})\s*(?:graduat(?:e|ing)|graduation|batch|class)"
+    ]
+
+    for pattern in patterns:
+        years.extend(
+            int(x)
+            for x in re.findall(pattern, t)
+        )
+
+    if not years:
+        return True
+
+    return target_year in years
+
 def location_score(job, profile):
     location = job.get("location", "").lower()
-    work_mode = mode(job)
 
     preferred = [
         x.lower()
         for x in profile.get("preferred_locations", [])
     ]
 
-    if work_mode == "remote":
-        return 10
+    if mode(job) == "remote":
+        return 5
 
     if any(place in location for place in preferred):
-        return 10
+        return 5
 
     if "india" in location:
-        return 7
+        return 4
 
-    return 3
+    return 2
 
 def skill_score(job, profile):
     t = text(job)
-
     matched = []
 
     for skill in profile.get("skills", []):
-        skill_lower = skill.lower()
-
-        if skill_lower in t:
+        if skill.lower() in t:
             matched.append(skill)
 
-    unique = list(dict.fromkeys(matched))
+    matched = list(dict.fromkeys(matched))
 
-    if len(unique) >= 8:
-        points = 30
-    elif len(unique) >= 6:
-        points = 27
-    elif len(unique) >= 5:
-        points = 24
-    elif len(unique) >= 4:
-        points = 21
-    elif len(unique) >= 3:
+    if len(matched) >= 5:
+        points = 20
+    elif len(matched) == 4:
         points = 17
-    elif len(unique) >= 2:
-        points = 12
-    elif len(unique) == 1:
-        points = 7
+    elif len(matched) == 3:
+        points = 14
+    elif len(matched) == 2:
+        points = 10
+    elif len(matched) == 1:
+        points = 6
     else:
         points = 0
 
-    return points, unique
+    return points, matched
 
 def role_score(job):
-    title = job.get("title", "").lower()
     groups = matched_role_groups(job)
+    title = job.get("title", "").lower()
 
     if not groups:
         return 0, []
 
     score = 25
 
-    if "software" in groups:
-        score += 5
-
     if "full_stack" in groups:
+        score += 8
+    elif "ml" in groups or "ai" in groups:
+        score += 8
+    elif "data_science" in groups:
         score += 7
-
-    if "data_science" in groups:
+    elif "software" in groups:
+        score += 6
+    elif "data_analyst" in groups:
         score += 5
-
-    if "ml" in groups:
-        score += 7
-
-    if "ai" in groups:
-        score += 7
-
-    if "data_analyst" in groups:
-        score += 4
+    elif "python" in groups:
+        score += 5
 
     if "intern" in title:
-        score += 3
+        score += 2
 
     return min(35, score), groups
 
 def domain_score(job):
     t = text(job)
-
     score = 0
 
     ai_words = [
@@ -395,8 +370,11 @@ def passes(job, profile):
     if not role_match(job, profile):
         return False, "Role does not match target roles"
 
+    if not graduation_ok(job, profile):
+        return False, "Not compatible with 2028 graduation"
+
     if not salary_ok(job):
-        return False, "Explicit compensation is at or below ₹20,000/month"
+        return False, "Stipend is at or below ₹20,000/month"
 
     if not duration_ok(job, profile):
         return False, "Duration violates work-mode availability"
@@ -405,7 +383,7 @@ def passes(job, profile):
 
 def score(job, profile):
     role_points, role_groups = role_score(job)
-    skills_points, matched_skills = skill_score(job, profile)
+    skill_points, matched_skills = skill_score(job, profile)
     domain_points = domain_score(job)
     location_points = location_score(job, profile)
     freshness_points = freshness_score(job)
@@ -413,7 +391,7 @@ def score(job, profile):
 
     total = (
         role_points
-        + skills_points
+        + skill_points
         + domain_points
         + location_points
         + freshness_points
@@ -422,21 +400,21 @@ def score(job, profile):
 
     reasons = []
 
-    if role_groups:
-        readable = {
-            "software": "Software Engineering",
-            "full_stack": "Full Stack",
-            "data_science": "Data Science",
-            "data_analyst": "Data Analytics",
-            "ml": "Machine Learning",
-            "ai": "AI",
-            "python": "Python"
-        }
+    names = {
+        "software": "Software Engineering",
+        "full_stack": "Full Stack",
+        "data_science": "Data Science",
+        "data_analyst": "Data Analytics",
+        "ml": "Machine Learning",
+        "ai": "AI",
+        "python": "Python"
+    }
 
+    if role_groups:
         reasons.append(
             "Role: " +
             ", ".join(
-                readable.get(group, group)
+                names.get(group, group)
                 for group in role_groups
             )
         )
@@ -449,7 +427,6 @@ def score(job, profile):
 
     if mode(job) == "remote":
         reasons.append("Remote")
-
     elif mode(job) == "hybrid":
         reasons.append("Hybrid")
 
@@ -473,15 +450,15 @@ def rank(jobs, profile):
     out = []
 
     for job in jobs:
-        ok, reason = passes(job, profile)
+        ok, _ = passes(job, profile)
 
         if not ok:
             continue
 
-        job_score, reasons = score(job, profile)
-
-        job["score"] = job_score
-        job["reasons"] = reasons
+        job["score"], job["reasons"] = score(
+            job,
+            profile
+        )
 
         out.append(job)
 
