@@ -17,8 +17,8 @@
     "backend developer",
     "backend developer intern",
     "backend development intern",
-    "backend engineer intern",
     "backend engineer",
+    "backend engineer intern",
     "backend development"
   ],
   "skills": [
@@ -63,13 +63,11 @@
   "work_preferences": {
     "on_site": {
       "allowed": true,
-      "max_duration_months": 2,
-      "preferred_period": "june-july"
+      "max_duration_months": 2
     },
     "hybrid": {
       "allowed": true,
-      "max_duration_months": 3,
-      "preferred_period": "june-august"
+      "max_duration_months": 3
     },
     "remote": {
       "allowed": true,
@@ -77,16 +75,19 @@
     }
   },
   "stipend": {
+    "required": true,
     "minimum_if_specified": 20000,
     "strictly_greater_than": true,
     "currency": "INR",
     "period": "monthly"
   },
-  "github": "https://github.com/Ashishbadal-source",
-  "linkedin": "https://www.linkedin.com/in/ashish-badal/",
   "internship_constraints": {
     "student": true,
-    "graduation_year": 2027,
+    "degree": "B.Tech",
+    "graduation_year": 2028,
+    "internship_year": 2027,
     "avoid_pure_backend_roles": true
-  }
+  },
+  "github": "",
+  "linkedin": ""
 }
