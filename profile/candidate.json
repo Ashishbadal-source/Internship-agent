@@ -1,0 +1,62 @@
+{
+  "target_year": 2027,
+  "target_roles": [
+    "software engineer intern",
+    "software developer intern",
+    "software engineering intern",
+    "full stack developer intern",
+    "data science intern",
+    "data analyst intern",
+    "machine learning engineer intern",
+    "ai engineer intern",
+    "ai/ml engineer intern",
+    "python developer intern"
+  ],
+  "blocked_roles": [
+    "backend developer",
+    "backend developer intern",
+    "backend development intern",
+    "backend engineer intern"
+  ],
+  "skills": [
+    "python",
+    "c++",
+    "sql",
+    "javascript",
+    "react",
+    "node.js",
+    "express",
+    "mongodb",
+    "supabase",
+    "fastapi",
+    "flask",
+    "pytorch",
+    "tensorflow",
+    "scikit-learn",
+    "machine learning",
+    "data science",
+    "data analysis",
+    "computer vision",
+    "nlp",
+    "git",
+    "docker",
+    "rest api",
+    "mern"
+  ],
+  "preferred_locations": [
+    "india",
+    "delhi",
+    "gurugram",
+    "gurgaon",
+    "noida",
+    "faridabad",
+    "bangalore",
+    "bengaluru",
+    "hyderabad",
+    "pune",
+    "mumbai",
+    "chennai"
+  ],
+  "github": "",
+  "linkedin": ""
+}
