@@ -25,14 +25,26 @@ def main():
     jobs = fetch_all()
     new_jobs = [x for x in jobs if x.get("id") not in seen]
     ranked = rank(new_jobs, profile)
-    top = ranked[:20]
+
+    top = [
+        job for job in ranked
+        if job.get("score", 0) >= 65
+    ][:20]
+
     for job in jobs:
         seen[job.get("id")] = job.get("created", "")
+
     save_seen(seen)
+
     if not top:
-        send("<b>Daily Internship Search</b>\n\nNo new jobs passed all hard filters today.")
+        send(
+            "<b>Daily Internship Search</b>\n\n"
+            "No new internships with a match score of 65+ today."
+        )
         return
+
     send(build(top))
+
     print(f"Fetched: {len(jobs)}")
     print(f"New: {len(new_jobs)}")
     print(f"Selected: {len(top)}")
