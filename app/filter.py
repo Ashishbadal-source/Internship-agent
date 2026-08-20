@@ -52,7 +52,8 @@ def text(job):
         job.get("description", ""),
         job.get("job_type", ""),
         job.get("location", ""),
-        job.get("work_mode", "")
+        job.get("work_mode", ""),
+        job.get("salary", "")
     ]).lower()
 
 def is_internship(job):
@@ -143,7 +144,7 @@ def salary_monthly_inr(job):
     if not salary:
         return None
 
-    t = salary.lower().replace(",", "").replace("₹", " inr ")
+    t = str(salary).lower().replace(",", "").replace("₹", " inr ")
 
     nums = [
         float(x)
@@ -155,11 +156,11 @@ def salary_monthly_inr(job):
 
     value = min(nums)
 
-    if "usd" in t or "$" in salary:
+    if "usd" in t or "$" in str(salary):
         value *= INR_PER_USD
-    elif "eur" in t or "€" in salary:
+    elif "eur" in t or "€" in str(salary):
         value *= INR_PER_EUR
-    elif "gbp" in t or "£" in salary:
+    elif "gbp" in t or "£" in str(salary):
         value *= INR_PER_GBP
 
     if "year" in t or "/yr" in t or "annual" in t:
@@ -172,10 +173,15 @@ def salary_monthly_inr(job):
     return value
 
 def salary_ok(job):
+    salary = job.get("salary", "")
+
+    if not salary:
+        return False
+
     monthly = salary_monthly_inr(job)
 
     if monthly is None:
-        return True
+        return False
 
     return monthly > 20000
 
@@ -208,7 +214,7 @@ def graduation_ok(job, profile):
     years = []
 
     patterns = [
-        r"(?:graduat(?:e|ing)|graduation|class of|batch of|students? graduating)\D{0,30}(20\d{2})",
+        r"(?:graduat(?:e|ing)|graduation|class of|batch of|students? graduating)\D{0,40}(20\d{2})",
         r"(20\d{2})\s*(?:graduat(?:e|ing)|graduation|batch|class)"
     ]
 
@@ -350,7 +356,7 @@ def stipend_score(job):
     monthly = salary_monthly_inr(job)
 
     if monthly is None:
-        return 2
+        return 0
 
     if monthly >= 50000:
         return 5
@@ -374,7 +380,7 @@ def passes(job, profile):
         return False, "Not compatible with 2028 graduation"
 
     if not salary_ok(job):
-        return False, "Stipend is at or below ₹20,000/month"
+        return False, "Stipend not specified or is at/below ₹20,000"
 
     if not duration_ok(job, profile):
         return False, "Duration violates work-mode availability"
