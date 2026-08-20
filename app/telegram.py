@@ -59,8 +59,7 @@ def build(jobs):
             ])
 
         lines.append(
-            "Filters: no pure backend, stipend > ₹20k when stated, "
-            "on-site ≤2 months, hybrid ≤3 months, remote <8 months."
+            "Filters: no pure backend, stipend above ₹20k when stated, on-site up to 2 months, hybrid up to 3 months, remote under 8 months."
         )
 
         messages.append("\n".join(lines))
