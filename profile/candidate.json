@@ -16,7 +16,9 @@
     "backend developer",
     "backend developer intern",
     "backend development intern",
-    "backend engineer intern"
+    "backend engineer intern",
+    "backend engineer",
+    "backend development"
   ],
   "skills": [
     "python",
@@ -57,6 +59,33 @@
     "mumbai",
     "chennai"
   ],
-  "github": "",
-  "linkedin": ""
+  "work_preferences": {
+    "on_site": {
+      "allowed": true,
+      "max_duration_months": 2,
+      "preferred_period": "june-july"
+    },
+    "hybrid": {
+      "allowed": true,
+      "max_duration_months": 3,
+      "preferred_period": "june-august"
+    },
+    "remote": {
+      "allowed": true,
+      "max_duration_months": 7
+    }
+  },
+  "stipend": {
+    "minimum_if_specified": 20000,
+    "strictly_greater_than": true,
+    "currency": "INR",
+    "period": "monthly"
+  },
+  "github": "https://github.com/Ashishbadal-source",
+  "linkedin": "https://www.linkedin.com/in/ashish-badal/",
+  "internship_constraints": {
+    "student": true,
+    "graduation_year": 2027,
+    "avoid_pure_backend_roles": true
+  }
 }
